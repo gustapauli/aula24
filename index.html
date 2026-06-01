@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aula 24 — O país que nasceu pra ser saqueado</title>
+<style>
+  :root {
+    --bg: #F4EFE6;
+    --bg-deep: #1A1814;
+    --ink: #1A1814;
+    --ink-soft: #4A4640;
+    --paper: #FBF7EF;
+    --accent: #B8862F;
+    --accent-soft: #E8C77A;
+    --line: rgba(26,24,20,0.12);
+    --correct: #2E7D4F;
+    --wrong: #B5342B;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .app {
+    position: fixed;
+    inset: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .progress {
+    position: absolute;
+    top: 10px; left: 12px; right: 12px;
+    height: 18px;
+    display: flex;
+    gap: 3px;
+    z-index: 50;
+    align-items: center;
+    cursor: pointer;
+  }
+  .seg {
+    flex: 1;
+    height: 3px;
+    background: rgba(26,24,20,0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+    transition: height 0.2s ease;
+  }
+  .seg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .seg.done::after { transform: scaleX(1); }
+  .seg.current::after { transform: scaleX(1); }
+  .seg.current { height: 4px; }
+
+  .header {
+    position: absolute;
+    top: 34px; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .header span {
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .slides { position: absolute; inset: 0; }
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 80px 28px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+    overflow-y: auto;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .slide.prev { transform: translateX(-40px); }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(28px, 8vw, 38px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  h1 em, h2 em {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(24px, 7vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin-bottom: 14px;
+  }
+  h3 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  p {
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  p + p { margin-top: 14px; }
+  .big {
+    font-family: var(--serif);
+    font-size: clamp(22px, 6.5vw, 28px);
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 18px;
+    margin: 8px 0;
+  }
+  .number {
+    font-family: var(--serif);
+    font-size: 88px;
+    font-weight: 800;
+    line-height: 0.9;
+    color: var(--accent);
+    letter-spacing: -0.04em;
+  }
+  .label {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .slide.active > * {
+    animation: fadeUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
+  }
+  .slide.active > *:nth-child(1) { animation-delay: 0.05s; }
+  .slide.active > *:nth-child(2) { animation-delay: 0.18s; }
+  .slide.active > *:nth-child(3) { animation-delay: 0.31s; }
+  .slide.active > *:nth-child(4) { animation-delay: 0.44s; }
+  .slide.active > *:nth-child(5) { animation-delay: 0.57s; }
+  .slide.active > *:nth-child(6) { animation-delay: 0.70s; }
+  .slide.active > *:nth-child(7) { animation-delay: 0.83s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tap-zone {
+    position: absolute;
+    top: 60px; bottom: 0;
+    width: 35%;
+    z-index: 30;
+    cursor: pointer;
+  }
+  .tap-zone.left { left: 0; }
+  .tap-zone.right { right: 0; }
+
+  .footer-hint {
+    position: absolute;
+    bottom: 18px; left: 0; right: 0;
+    text-align: center;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    opacity: 0.6;
+    z-index: 20;
+    pointer-events: none;
+  }
+  .footer-hint .arrow {
+    display: inline-block;
+    animation: nudge 2s ease-in-out infinite;
+  }
+  @keyframes nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+
+  .illu {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto 18px;
+    display: block;
+  }
+  .illu.sm { max-width: 180px; }
+  .illu.lg { max-width: 320px; }
+  .illu svg { width: 100%; height: auto; display: block; }
+
+  .draw path, .draw line, .draw circle, .draw rect, .draw polygon, .draw polyline {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: draw 1.6s 0.3s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+  }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  .cover {
+    background: var(--bg-deep);
+    color: var(--paper);
+  }
+  .cover h1 { color: var(--paper); }
+  .cover .eyebrow { color: var(--accent-soft); }
+  .cover p { color: rgba(251,247,239,0.7); }
+  .cover .footer-hint { color: rgba(251,247,239,0.5); }
+
+  .quiz-intro { text-align: center; }
+  .quiz-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--paper);
+    animation: popIn 0.6s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .question-num {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .question {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.3;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .option:active { transform: scale(0.98); }
+  .option .letter {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 1px;
+    transition: all 0.2s ease;
+  }
+  .option.correct {
+    background: rgba(46, 125, 79, 0.08);
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+  .option.correct .letter {
+    background: var(--correct);
+    color: white;
+    border-color: var(--correct);
+  }
+  .option.wrong {
+    background: rgba(181, 52, 43, 0.06);
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
+  .option.wrong .letter {
+    background: var(--wrong);
+    color: white;
+    border-color: var(--wrong);
+  }
+  .option.disabled { pointer-events: none; opacity: 0.55; }
+
+  .feedback {
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  .feedback.show {
+    opacity: 1;
+    max-height: 400px;
+  }
+  .feedback.right {
+    background: rgba(46, 125, 79, 0.08);
+    color: var(--correct);
+    border: 1px solid rgba(46, 125, 79, 0.2);
+  }
+  .feedback.miss {
+    background: rgba(181, 52, 43, 0.06);
+    color: var(--ink);
+    border: 1px solid rgba(181, 52, 43, 0.2);
+  }
+  .feedback strong { font-weight: 700; }
+  .feedback .head {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    margin-bottom: 6px;
+    display: block;
+    font-weight: 600;
+  }
+
+  .end {
+    background: var(--bg-deep);
+    color: var(--paper);
+    text-align: center;
+  }
+  .end h2 { color: var(--paper); }
+  .end p { color: rgba(251,247,239,0.7); }
+  .end .score {
+    font-family: var(--serif);
+    font-size: 72px;
+    font-weight: 800;
+    color: var(--accent-soft);
+    line-height: 1;
+    margin: 20px 0;
+  }
+  .restart {
+    margin-top: 28px;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    padding: 14px 28px;
+    border-radius: 100px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .restart:active { transform: scale(0.96); }
+
+  .slide::-webkit-scrollbar { display: none; }
+  .slide { scrollbar-width: none; }
+
+  .card-soft {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .stamp {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+  .stamp.dark {
+    background: var(--bg-deep);
+    color: var(--accent-soft);
+  }
+
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .pillar {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .pillar svg { width: 38px; height: 38px; margin: 0 auto 6px; display: block; }
+  .pillar .name {
+    font-family: var(--serif);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="progress" id="progress"></div>
+  <div class="header">
+    <span>Aula 24</span>
+    <span id="counter">1 / 1</span>
+  </div>
+
+  <div class="slides" id="slides">
+
+    <!-- ============== 1 — CAPA ============== -->
+    <section class="slide cover active">
+      <div class="eyebrow">História · Aula 24 · Módulo 4</div>
+      <h1>O país que nasceu pra ser <em>saqueado</em>.</h1>
+      <p style="margin-top: 16px;">O Brasil não foi descoberto. Foi montado. Como um negócio. Pra dar lucro pra outra pessoa.</p>
+      <div class="illu" style="margin-top: 36px; max-width: 260px;">
+        <svg viewBox="0 0 260 130" class="draw" fill="none" stroke="#E8C77A" stroke-width="1.5">
+          <!-- navio carregando recurso -->
+          <path d="M30 95 L90 95 L80 112 L40 112 Z"/>
+          <path d="M60 95 L60 50"/>
+          <path d="M60 55 L88 65 L60 75 Z"/>
+          <!-- caixas/carga -->
+          <rect x="44" y="84" width="10" height="9"/>
+          <rect x="56" y="84" width="10" height="9"/>
+          <!-- seta atravessando oceano -->
+          <path d="M105 100 L175 100" stroke-dasharray="4 4"/>
+          <path d="M167 94 L175 100 L167 106"/>
+          <path d="M120 110 Q140 116 160 110" />
+          <!-- metrópole / coroa -->
+          <path d="M195 100 L240 100 L240 70 L195 70 Z"/>
+          <path d="M195 70 L200 55 L210 68 L217 52 L224 68 L234 55 L240 70"/>
+          <circle cx="217" cy="86" r="6"/>
+        </svg>
+      </div>
+      <div class="footer-hint">toque na lateral pra avançar <span class="arrow">→</span></div>
+    </section>
+
+    <!-- ============== 2 ============== -->
+    <section class="slide">
+      <p class="big">Oi.</p>
+      <p style="margin-top: 18px;">Aula passada a gente fechou o Módulo 3 falando de China e Índia.</p>
+      <p>Dois gigantes que foram saqueados pelo ocidente e hoje estão voltando pro centro do mundo.</p>
+      <p>O "Século de Humilhação" da China e os 200 anos de colonização da Índia <strong>explicam até hoje</strong> o comportamento desses países.</p>
+    </section>
+
+    <!-- ============== 3 ============== -->
+    <section class="slide">
+      <div class="eyebrow">Agora o foco vira</div>
+      <p>A gente vira o holofote pra <strong>casa</strong>.</p>
+      <p class="big" style="margin-top: 14px;">Começa o Módulo 4: o Brasil inteiro.</p>
+      <p style="margin-top: 12px;">Do "descobrimento" até o Brasil de 2026. São sete aulas, e esta aqui é o <strong>alicerce</strong> de todas.</p>
+    </section>
+
+    <!-- ============== 4 — gancho ============== -->
+    <section class="slide">
+      <p class="big">E vou te falar uma coisa direto.</p>
+      <p style="margin-top: 16px;">Esquece aquela história de escola: caravela, índio recebendo português na praia, todo mundo amigo.</p>
+      <p style="margin-top: 8px;">Isso é versão de <strong>folheto turístico</strong>.</p>
+      <p style="margin-top: 12px; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--accent);">A versão real é mais fria. E mais útil.</p>
+    </section>
+
+    <!-- ============== 5 — a pergunta ============== -->
+    <section class="slide">
+      <div class="eyebrow">A pergunta que ninguém te ensinou a fazer</div>
+      <p>"Por que um país é rico ou pobre?"</p>
+      <p style="margin-top: 12px;">A resposta preguiçosa é: "ah, é o povo, é a cultura, é a corrupção."</p>
+      <p class="big" style="margin-top: 14px; color: var(--accent);">Errado.</p>
+      <p style="margin-top: 8px;">A resposta de verdade começa lá atrás. No <strong>projeto original</strong>.</p>
+    </section>
+
+    <!-- ============== 6 — os dois negócios ============== -->
+    <section class="slide">
+      <p>Pensa assim. Você abre dois negócios.</p>
+      <div class="pillar-grid" style="margin-top: 16px;">
+        <div class="pillar" style="text-align:left; padding:14px;">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <path d="M6 30 L30 30"/>
+            <path d="M10 30 L10 22 M18 30 L18 14 M26 30 L26 8"/>
+            <path d="M8 18 L16 10 L24 14 L30 6"/>
+          </svg>
+          <div class="name">Pra crescer</div>
+          <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Durar, virar marca, atender bem.</p>
+        </div>
+        <div class="pillar" style="text-align:left; padding:14px;">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <path d="M18 6 L18 24"/>
+            <path d="M12 18 L18 24 L24 18"/>
+            <path d="M8 30 L28 30"/>
+          </svg>
+          <div class="name">Pra sugar</div>
+          <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Extrair tudo e fechar quando esgotar.</p>
+        </div>
+      </div>
+      <p style="margin-top:16px;">Os dois são "empresas". Mas o <strong>DNA</strong> é completamente diferente.</p>
+    </section>
+
+    <!-- ============== 7 — a tese ============== -->
+    <section class="slide">
+      <p class="big">O Brasil foi o <em>segundo tipo</em>.</p>
+      <p style="margin-top: 16px;">Feito pra extrair, não pra prosperar.</p>
+      <p style="margin-top: 12px;">E essa é a <strong>tese central</strong> da aula de hoje.</p>
+    </section>
+
+    <!-- ============== 8 — sentido da colonização ============== -->
+    <section class="slide">
+      <div class="eyebrow">Os historiadores têm um nome pra isso</div>
+      <h2>"Sentido da <em>colonização</em>."</h2>
+      <p style="margin-top: 14px;">Ideia desenvolvida por dois caras que você vai ouvir muito:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div class="card-soft" style="padding: 14px;">
+          <div class="label" style="margin-bottom: 4px;">Caio Prado Jr.</div>
+          <p style="font-size: 15px;">Historiador paulista, marxista. Escreveu <em>Formação do Brasil Contemporâneo</em> em 1942.</p>
+        </div>
+        <div class="card-soft" style="padding: 14px;">
+          <div class="label" style="margin-bottom: 4px;">Celso Furtado</div>
+          <p style="font-size: 15px;">Economista cearense. Escreveu <em>Formação Econômica do Brasil</em> em 1959.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== 9 — metrópole x colônia ============== -->
+    <section class="slide">
+      <p>A ideia é simples e brutal:</p>
+      <p class="quote" style="margin-top: 14px;">A colônia não existia pra si mesma. Existia pra fornecer lucro pra metrópole.</p>
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; border-left: 3px solid var(--accent);"><strong>Metrópole</strong> = o país-dono. No caso, Portugal.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; border-left: 3px solid var(--accent);"><strong>Colônia</strong> = o território explorado. No caso, a gente.</div>
+      </div>
+    </section>
+
+    <!-- ============== 10 ============== -->
+    <section class="slide">
+      <p>Tudo aqui foi organizado em torno disso.</p>
+      <p style="margin-top: 12px;">Onde plantar. O que plantar. Quem ia trabalhar. Pra quem vender. A que preço.</p>
+      <p class="big" style="margin-top: 14px;">Nada foi pensado pra construir uma sociedade que prosperasse.</p>
+      <p style="margin-top: 12px;">Foi pensado pra <strong>encher navio e mandar pra Lisboa</strong>.</p>
+    </section>
+
+    <!-- ============== 11 — LIÇÃO 1 ============== -->
+    <section class="slide">
+      <span class="stamp">Lição 1</span>
+      <h2 style="margin-top: 16px;">Origem importa. Muito mais do que acham.</h2>
+      <p style="margin-top: 12px;">Um país, uma empresa, uma família carregam o DNA de como foram fundados, por gerações.</p>
+      <p style="margin-top: 12px;">O Brasil foi fundado como <strong>operação de extração</strong>. Por isso, séculos depois, ainda tem os sintomas: economia que depende de exportar matéria-prima, desigualdade brutal, elite que se serve do Estado.</p>
+    </section>
+
+    <!-- ============== 12 ============== -->
+    <section class="slide">
+      <p class="quote">Quando for entender qualquer coisa — empresa, cidade, país —, pergunte primeiro: "pra que isso foi criado, originalmente?"</p>
+      <p class="big" style="margin-top: 16px;">A resposta explica metade do comportamento atual.</p>
+    </section>
+
+    <!-- ============== 13 — 1500 ============== -->
+    <section class="slide">
+      <div class="number">1500</div>
+      <div class="label" style="margin-top: 8px;">Chegada sem interesse</div>
+      <p style="margin-top: 14px;">Em <strong>22 de abril de 1500</strong>, a frota de <strong>Pedro Álvares Cabral</strong> — fidalgo português com 13 navios rumo às Índias atrás de especiarias — aportou no que hoje é a Bahia.</p>
+      <p style="margin-top: 12px;">Se foi acaso ou rota planejada, os historiadores ainda discutem. Mas isso pouco importa.</p>
+    </section>
+
+    <!-- ============== 14 ============== -->
+    <section class="slide">
+      <p>O que importa é o que aconteceu <strong>depois</strong>.</p>
+      <p class="big" style="margin-top: 14px;">Quase nada. Por 30 anos.</p>
+      <p style="margin-top: 14px;">Portugal olhou pra essa terra enorme, viu floresta, viu uns indígenas, <strong>não viu ouro nem especiaria</strong> — e perdeu o interesse.</p>
+    </section>
+
+    <!-- ============== 15 — pau-brasil ============== -->
+    <section class="slide">
+      <div class="eyebrow">O único produto que valia</div>
+      <h2>O <em>pau-brasil</em>.</h2>
+      <div class="illu sm" style="margin: 18px auto;">
+        <svg viewBox="0 0 120 110" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M60 100 L60 40"/>
+          <path d="M60 50 L40 30 M60 60 L80 40 M60 45 L78 28 M60 65 L42 48"/>
+          <path d="M48 38 Q40 28 52 26 Q44 18 58 20 Q60 12 68 20 Q80 16 74 28 Q86 30 76 40 Z"/>
+          <path d="M50 100 L70 100"/>
+        </svg>
+      </div>
+      <p>Uma árvore de que se extraía um corante vermelho caríssimo, pra tingir tecido na Europa.</p>
+    </section>
+
+    <!-- ============== 16 — o nome ============== -->
+    <section class="slide">
+      <p>É daí que vem o nome do país, aliás.</p>
+      <p class="big" style="margin-top: 14px;">A gente foi batizado com o nome de uma <em>mercadoria</em>.</p>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--accent);">Pensa nisso: nosso nome é um produto de exportação.</p>
+    </section>
+
+    <!-- ============== 17 — extração pura ============== -->
+    <section class="slide">
+      <p>O esquema do pau-brasil era extração pura:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Chegava.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Cortava a árvore.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Trocava por bugiganga com os indígenas, que faziam o trabalho braçal.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Enchia o navio e ia embora.</div>
+      </div>
+      <p style="margin-top: 14px;">Não construía nada. Não fixava ninguém. <strong>Só raspava o recurso.</strong></p>
+    </section>
+
+    <!-- ============== 18 — franceses ============== -->
+    <section class="slide">
+      <p>Aí veio o problema.</p>
+      <p class="big" style="margin-top: 14px;">Os franceses começaram a vir contrabandear pau-brasil também.</p>
+      <p style="margin-top: 14px;">E em pleno mercantilismo (lembra da aula 8? cada país queria monopólio do comércio com suas colônias), Portugal percebeu:</p>
+      <p style="margin-top: 8px; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--accent);">"Ou eu ocupo isso de verdade, ou perco pros franceses."</p>
+    </section>
+
+    <!-- ============== 19 ============== -->
+    <section class="slide">
+      <p class="quote">O Brasil só começou a ser povoado de verdade não por amor à terra, mas por medo de perder pro concorrente.</p>
+      <p class="big" style="margin-top: 16px;">Geopolítica é isso. Quase sempre.</p>
+    </section>
+
+    <!-- ============== 20 — CAPITANIAS ============== -->
+    <section class="slide">
+      <div class="number">1534</div>
+      <div class="label" style="margin-top: 8px;">A solução barata</div>
+      <h2 style="margin-top: 12px;">Capitanias <em>hereditárias</em>.</h2>
+      <p style="margin-top: 14px;">Portugal era um reino pequeno, com pouca gente e pouco dinheiro, ocupado ganhando fortuna na Índia e na África.</p>
+      <p style="margin-top: 8px;">Não tinha grana nem vontade de bancar a ocupação de um território gigante do outro lado do oceano.</p>
+    </section>
+
+    <!-- ============== 21 ============== -->
+    <section class="slide">
+      <p>Solução do rei <strong>Dom João III</strong>: dividiu o litoral em <strong>15 faixas de terra</strong> e entregou cada uma a um <strong>donatário</strong> — um nobre ou comerciante de confiança da Coroa.</p>
+      <div class="illu" style="margin: 18px auto; max-width: 200px;">
+        <svg viewBox="0 0 120 140" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M40 5 Q70 10 60 40 Q80 60 65 90 Q75 120 50 135"/>
+          <path d="M40 30 L40 30 M0 30 L40 30 M0 55 L48 55 M0 80 L62 80 M0 105 L70 105"/>
+          <text x="6" y="22" font-family="Georgia" font-size="8" fill="#4A4640">faixas de terra</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ============== 22 — o esquema ============== -->
+    <section class="slide">
+      <div class="eyebrow">Entenda o esquema — ele revela tudo</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">O rei <strong>não gastava nada</strong>. Terceirizava a colonização.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">O donatário recebia a terra de graça, com poderes quase absolutos.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">Em troca, bancava do próprio bolso o povoamento, a defesa e a produção.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">Era hereditária (passava pros filhos), mas não podia ser vendida.</div>
+      </div>
+    </section>
+
+    <!-- ============== 23 ============== -->
+    <section class="slide">
+      <p class="big">Era um sistema de <em>franquias</em> colonial.</p>
+      <p style="margin-top: 16px; font-family: var(--serif); font-style: italic; font-size: 19px; color: var(--accent);">"Toma esse pedaço de terra, vira ele rentável com seu próprio dinheiro, me paga minha parte, e o risco é todo seu."</p>
+    </section>
+
+    <!-- ============== 24 — fracasso ============== -->
+    <section class="slide">
+      <p class="big">Resultado: fracasso quase total.</p>
+      <p style="margin-top: 14px;">Das 15 capitanias, só <strong>duas</strong> deram certo de verdade:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div class="card-soft" style="padding: 14px;">
+          <div class="label" style="margin-bottom: 4px;">Pernambuco</div>
+          <p style="font-size: 15px;">Ficou riquíssima com o açúcar.</p>
+        </div>
+        <div class="card-soft" style="padding: 14px;">
+          <div class="label" style="margin-bottom: 4px;">São Vicente</div>
+          <p style="font-size: 15px;">No litoral de São Paulo.</p>
+        </div>
+      </div>
+      <p style="margin-top: 12px; font-size: 15px; color: var(--ink-soft);">As outras faliram, foram destruídas por ataques indígenas, ou abandonadas.</p>
+    </section>
+
+    <!-- ============== 25 — LIÇÃO 2 ============== -->
+    <section class="slide">
+      <span class="stamp">Lição 2</span>
+      <h2 style="margin-top: 16px;">Terceirizar o risco parece esperto. Mas tem limite.</h2>
+      <p style="margin-top: 12px;">Portugal quis colonizar sem investir — e quase perdeu tudo. Quando deu errado, teve que assumir a conta.</p>
+      <p style="margin-top: 12px;">Vale pra país, vale pra empresa: você pode terceirizar a execução, mas se a coisa for estratégica, <strong>a longo prazo alguém tem que botar a mão na massa e bancar o investimento de verdade.</strong></p>
+    </section>
+
+    <!-- ============== 26 — GOVERNO-GERAL ============== -->
+    <section class="slide">
+      <div class="number">1549</div>
+      <div class="label" style="margin-top: 8px;">O Estado entra em campo</div>
+      <h2 style="margin-top: 12px;">Governo-geral.</h2>
+      <p style="margin-top: 14px;">Como as capitanias estavam afundando, a Coroa mudou de estratégia: criou uma administração central pra coordenar tudo de cima.</p>
+    </section>
+
+    <!-- ============== 27 — Salvador ============== -->
+    <section class="slide">
+      <p>Mandou o primeiro governador-geral, <strong>Tomé de Sousa</strong>, que fundou <strong>Salvador</strong>, na Bahia.</p>
+      <div class="illu sm" style="margin: 18px auto;">
+        <svg viewBox="0 0 140 90" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M20 80 L120 80"/>
+          <rect x="30" y="55" width="20" height="25"/>
+          <rect x="58" y="45" width="24" height="35"/>
+          <rect x="90" y="60" width="18" height="20"/>
+          <path d="M58 45 L70 35 L82 45"/>
+          <circle cx="70" cy="30" r="3" fill="#B8862F"/>
+        </svg>
+      </div>
+      <p class="big">A primeira capital do Brasil.</p>
+      <p style="margin-top: 8px;">Que ficaria capital por mais de <strong>200 anos</strong>.</p>
+    </section>
+
+    <!-- ============== 28 — jesuítas ============== -->
+    <section class="slide">
+      <p>Junto com ele vieram os <strong>jesuítas</strong> — padres da Companhia de Jesus, a ordem religiosa de choque da Reforma Católica (lembra da aula 9, a Contrarreforma?).</p>
+      <p style="margin-top: 12px;">A missão oficial deles era <strong>catequizar os indígenas</strong> — converter ao cristianismo.</p>
+    </section>
+
+    <!-- ============== 29 — a tensão ============== -->
+    <section class="slide">
+      <div class="eyebrow">E aqui aparece uma tensão interessante</div>
+      <p>Os jesuítas frequentemente <strong>protegiam os indígenas da escravização</strong> dos colonos.</p>
+      <p style="margin-top: 12px;">Não por bondade pura: queriam os índios convertidos e aldeados sob controle da Igreja, não escravizados nas fazendas.</p>
+      <p style="margin-top: 12px;">Os colonos queriam mão de obra escrava indígena de graça. Os jesuítas atrapalhavam. <strong>Conflito que vai durar séculos.</strong></p>
+    </section>
+
+    <!-- ============== 30 ============== -->
+    <section class="slide">
+      <p class="quote">Mesmo dentro do "lado dos colonizadores" havia disputa de interesse. Nunca existe "um lado só" homogêneo na história.</p>
+      <p style="margin-top: 16px;">Igreja, Coroa e colonos queriam coisas diferentes — e brigavam entre si o tempo todo.</p>
+    </section>
+
+    <!-- ============== 31 — AÇÚCAR ============== -->
+    <section class="slide">
+      <div class="eyebrow">O coração econômico dos primeiros 150 anos</div>
+      <h2>O ouro <em>verde</em>: o ciclo do açúcar.</h2>
+      <div class="illu" style="margin-top: 20px; max-width: 200px;">
+        <svg viewBox="0 0 120 110" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M30 105 L30 30 M45 105 L45 25 M60 105 L60 28 M75 105 L75 24 M90 105 L90 32"/>
+          <path d="M30 30 L24 18 M45 25 L40 12 M60 28 L66 14 M75 24 L82 12 M90 32 L96 20"/>
+        </svg>
+      </div>
+      <p>A Europa era <strong>viciada em açúcar</strong> e pagava fortunas por ele.</p>
+    </section>
+
+    <!-- ============== 32 — massapê ============== -->
+    <section class="slide">
+      <p>O Nordeste brasileiro era o lugar ideal do planeta pra produzir cana em escala:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Sol forte.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Terra de <strong>massapê</strong> — solo escuro e fértil, perfeito pra cana.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Litoral pra escoar pelo mar.</div>
+      </div>
+    </section>
+
+    <!-- ============== 33 — plantation ============== -->
+    <section class="slide">
+      <div class="eyebrow">E aí montou-se o modelo</div>
+      <h2>A <em>plantation</em>.</h2>
+      <p style="margin-top: 12px;">Sistema de produção agrícola com <strong>quatro características fixas</strong>. Presta atenção, porque essas quatro coisas se repetem na história do Brasil inteira.</p>
+    </section>
+
+    <!-- ============== 34 — as 4 características ============== -->
+    <section class="slide">
+      <div class="pillar-grid">
+        <div class="pillar" style="text-align:left; padding:14px;">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <path d="M8 30 L8 12 M16 30 L16 10 M24 30 L24 12 M32 30 L32 10"/>
+          </svg>
+          <div class="name">Monocultura</div>
+          <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Planta-se UMA coisa só, em escala gigante.</p>
+        </div>
+        <div class="pillar" style="text-align:left; padding:14px;">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <rect x="5" y="8" width="26" height="20"/>
+            <path d="M5 18 L31 18 M18 8 L18 28"/>
+          </svg>
+          <div class="name">Latifúndio</div>
+          <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Propriedades enormes, nas mãos de pouca gente.</p>
+        </div>
+        <div class="pillar" style="text-align:left; padding:14px;">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <circle cx="18" cy="12" r="5"/>
+            <path d="M10 30 Q18 20 26 30"/>
+            <path d="M14 18 L8 24 M22 18 L28 24"/>
+          </svg>
+          <div class="name">Escravidão</div>
+          <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Trabalho forçado, não pago.</p>
+        </div>
+        <div class="pillar" style="text-align:left; padding:14px;">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <path d="M6 26 L24 26 L18 32 L8 32 Z"/>
+            <path d="M14 26 L14 10 L26 16 L14 18"/>
+          </svg>
+          <div class="name">Exportação</div>
+          <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Não pra alimentar a colônia. Pra vender lá fora.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== 35 — engenho ============== -->
+    <section class="slide">
+      <p>O centro de tudo era o <strong>engenho</strong> — a fazenda-fábrica onde a cana virava açúcar.</p>
+      <p style="margin-top: 12px;">E o engenho era um mundo social inteiro, com três espaços que viraram símbolo do Brasil.</p>
+    </section>
+
+    <!-- ============== 36 — casa-grande / senzala / capela ============== -->
+    <section class="slide">
+      <div class="illu" style="margin-bottom: 16px; max-width: 240px;">
+        <svg viewBox="0 0 240 90" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <!-- casa-grande -->
+          <rect x="10" y="40" width="55" height="40"/>
+          <path d="M10 40 L37 22 L65 40"/>
+          <!-- senzala -->
+          <rect x="90" y="55" width="60" height="25"/>
+          <path d="M100 55 L100 80 M115 55 L115 80 M130 55 L130 80"/>
+          <!-- capela -->
+          <rect x="180" y="42" width="40" height="38"/>
+          <path d="M180 42 L200 26 L220 42"/>
+          <path d="M200 14 L200 26 M195 19 L205 19"/>
+        </svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;"><strong>Casa-grande:</strong> a mansão do senhor de engenho. Patrão, juiz, chefe militar, quase rei.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;"><strong>Senzala:</strong> o galpão onde os africanos escravizados eram amontoados em condições desumanas.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;"><strong>Capela:</strong> a igreja, porque tudo era abençoado por Deus, inclusive a escravidão.</div>
+      </div>
+    </section>
+
+    <!-- ============== 37 — LIÇÃO 3 ============== -->
+    <section class="slide">
+      <span class="stamp">Lição 3</span>
+      <h2 style="margin-top: 16px;">Sempre pergunte: quem trabalha e quem fica com o lucro?</h2>
+      <p style="margin-top: 12px;">Toda economia se resume a isso, no fundo. No engenho, a equação era a mais brutal possível.</p>
+    </section>
+
+    <!-- ============== 38 — a equação ============== -->
+    <section class="slide">
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
+        <div class="card-soft" style="padding: 16px;">
+          <div class="label" style="margin-bottom: 4px;">O africano escravizado</div>
+          <p style="font-family: var(--serif); font-size: 18px;">fazia <em>100% do trabalho</em> e ficava com <strong>0% do lucro</strong>.</p>
+        </div>
+        <div class="card-soft" style="padding: 16px;">
+          <div class="label" style="margin-bottom: 4px;">O senhor</div>
+          <p style="font-family: var(--serif); font-size: 18px;">não fazia <em>nenhum</em> e ficava com <strong>tudo</strong>.</p>
+        </div>
+      </div>
+      <p class="big" style="margin-top: 16px;">Essa é a matriz da desigualdade brasileira até hoje.</p>
+      <p style="margin-top: 8px;">Não nasceu ontem. <strong>Nasceu no engenho.</strong></p>
+    </section>
+
+    <!-- ============== 39 — rede global ============== -->
+    <section class="slide">
+      <div class="eyebrow">Um detalhe que a escola raramente conta</div>
+      <p>O açúcar brasileiro <strong>não enriqueceu só Portugal</strong>.</p>
+      <p style="margin-top: 12px;">A cadeia inteira passava por banqueiros e comerciantes <strong>holandeses, italianos e de meia Europa</strong>, que financiavam, refinavam e distribuíam o produto.</p>
+      <div class="illu sm" style="margin: 16px auto;">
+        <svg viewBox="0 0 160 80" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <circle cx="30" cy="55" r="8"/>
+          <text x="14" y="74" font-family="Georgia" font-size="8" fill="#4A4640">América</text>
+          <circle cx="80" cy="25" r="8"/>
+          <text x="64" y="14" font-family="Georgia" font-size="8" fill="#4A4640">Europa</text>
+          <circle cx="130" cy="55" r="8"/>
+          <text x="116" y="74" font-family="Georgia" font-size="8" fill="#4A4640">África</text>
+          <path d="M38 50 L72 30 M88 30 L122 50 M38 58 L122 58" stroke-dasharray="3 3"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ============== 40 — base da pirâmide ============== -->
+    <section class="slide">
+      <p>Ou seja: o Brasil colonial <strong>já era peça da economia mundial capitalista que estava nascendo</strong> (lembra do mercantilismo, aula 8?).</p>
+      <p style="margin-top: 12px;">A gente não estava "fora do mundo".</p>
+      <p class="big" style="margin-top: 14px;">A gente estava na <em>base da pirâmide</em> do mundo.</p>
+      <p style="margin-top: 8px;">Produzindo a riqueza que outros embolsavam. Muda o produto, mas a posição na pirâmide custa demais pra mudar.</p>
+    </section>
+
+    <!-- ============== 41 — São Vicente ============== -->
+    <section class="slide">
+      <div class="eyebrow">Detalhe que a pesquisa reforça</div>
+      <p>A <strong>primeiríssima</strong> experiência açucareira séria do Brasil não foi nem no Nordeste — foi no <strong>litoral de São Vicente</strong>, em São Paulo, nas primeiras décadas.</p>
+      <p style="margin-top: 12px;">Durou uns 40 anos e foi engolida pelos grandes negócios do Nordeste.</p>
+      <p style="margin-top: 12px; font-style: italic; color: var(--ink-soft);">História quase nunca é tão arrumadinha quanto o resumo de escola faz parecer.</p>
+    </section>
+
+    <!-- ============== 42 — OURO ============== -->
+    <section class="slide">
+      <div class="eyebrow">Século XVIII</div>
+      <h2>O ouro de <em>verdade</em>: a corrida pra Minas.</h2>
+      <div class="illu" style="margin-top: 18px; max-width: 180px;">
+        <svg viewBox="0 0 120 100" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M30 70 L50 50 L60 60 L75 45 L90 70 Z"/>
+          <circle cx="55" cy="80" r="4" fill="#B8862F"/>
+          <circle cx="68" cy="84" r="3" fill="#B8862F"/>
+          <circle cx="45" cy="86" r="3" fill="#B8862F"/>
+        </svg>
+      </div>
+      <p>Por mais de um século o açúcar reinou. Aí, no finzinho do século XVII, os <strong>bandeirantes</strong> finalmente acharam o que Portugal sonhava desde 1500: <strong>ouro</strong>. Muito ouro.</p>
+    </section>
+
+    <!-- ============== 43 — a corrida ============== -->
+    <section class="slide">
+      <p>Estourou a maior <strong>corrida do ouro</strong> da história até então.</p>
+      <p style="margin-top: 12px;">Na região que viraria <strong>Minas Gerais</strong>, e depois Goiás e Mato Grosso. Gente de Portugal e de toda a colônia largou tudo e correu pro interior.</p>
+      <p style="margin-top: 12px;">Surgiram cidades do nada: Ouro Preto, Mariana, São João del-Rei.</p>
+    </section>
+
+    <!-- ============== 44 — eixo desce ============== -->
+    <section class="slide">
+      <p>O eixo econômico e político do Brasil <strong>desceu do Nordeste açucareiro pro Sudeste minerador</strong>.</p>
+      <p style="margin-top: 12px;">Tanto que em <strong>1763</strong> a capital foi transferida de <strong>Salvador pro Rio de Janeiro</strong> — que era o porto de escoamento do ouro mineiro.</p>
+      <p style="margin-top: 8px; font-size: 15px; color: var(--ink-soft);">(O Rio ficaria capital até 1960, quando veio Brasília.)</p>
+    </section>
+
+    <!-- ============== 45 — honestidade ============== -->
+    <section class="slide">
+      <p>Os números variam muito entre fontes.</p>
+      <p style="margin-top: 12px;">Algumas dizem que o Brasil chegou a produzir <strong>quase metade de todo o ouro do mundo</strong> no auge do século XVIII — mas as estimativas divergem bastante, e eu prefiro te avisar disso a te vender um número como certeza.</p>
+      <p class="big" style="margin-top: 14px;">O consenso é: foi muito. E mudou o país.</p>
+    </section>
+
+    <!-- ============== 46 — o quinto ============== -->
+    <section class="slide">
+      <div class="eyebrow">A parte que mais te interessa</div>
+      <h2>"O <em>quinto</em>."</h2>
+      <p style="margin-top: 14px;">Portugal cobrava um imposto: literalmente <strong>um quinto (20%) de todo o ouro extraído</strong> ia direto pra Coroa.</p>
+      <p style="margin-top: 12px;">Pra garantir que ninguém sonegasse, montou-se uma máquina fiscal pesadíssima: o ouro só podia ser fundido em <strong>casas de fundição</strong> oficiais, virava barra com o selo do rei, e quem fosse pego com ouro em pó era preso ou pior.</p>
+    </section>
+
+    <!-- ============== 47 — derrama ============== -->
+    <section class="slide">
+      <p>E quando a produção caía e o quinto não batia a meta (100 arrobas de ouro por ano), Portugal criava a <strong>derrama</strong>.</p>
+      <p style="margin-top: 12px;">Uma cobrança forçada da diferença: os soldados invadiam casas e confiscavam bens até completar a cota.</p>
+      <p style="margin-top: 12px;">Foi a ameaça de uma derrama que estourou a <strong>Inconfidência Mineira</strong> (1789), cujo símbolo virou o <strong>Tiradentes</strong>. Mas isso é assunto da aula sobre Independência.</p>
+    </section>
+
+    <!-- ============== 48 — o ouro não ficou ============== -->
+    <section class="slide">
+      <p>Repare no padrão: o ouro brasileiro <strong>não ficou no Brasil</strong>.</p>
+      <p style="margin-top: 12px;">Foi quase todo pra Portugal — e de lá, em boa parte, escorreu pra <strong>Inglaterra</strong>, pra pagar dívidas e produtos manufaturados ingleses.</p>
+      <p style="margin-top: 12px;">Tem historiador que diz, com razão, que <strong>o ouro brasileiro ajudou a financiar a Revolução Industrial inglesa</strong> (aula 13).</p>
+    </section>
+
+    <!-- ============== 49 — a ironia ============== -->
+    <section class="slide">
+      <p class="quote">O suor de escravos africanos arrancando ouro de Minas ajudou a pagar as fábricas que tornaram a Inglaterra a potência do mundo.</p>
+      <p style="margin-top: 14px;">E que depois inundariam o próprio Brasil de produtos industrializados que a gente não sabia fazer.</p>
+      <p class="big" style="margin-top: 14px;">A extração colonial em estado puro: a riqueza nasce aqui e vai engordar outro lugar.</p>
+    </section>
+
+    <!-- ============== 50 — BANDEIRANTE ============== -->
+    <section class="slide">
+      <div class="eyebrow">Puro exercício de pensamento crítico</div>
+      <h2>O bandeirante: nem herói, nem só <em>vilão</em>.</h2>
+      <div class="illu sm" style="margin: 16px auto;">
+        <svg viewBox="0 0 100 100" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <circle cx="50" cy="28" r="10"/>
+          <path d="M40 22 L60 22 L56 16 L44 16 Z"/>
+          <path d="M50 38 L50 70 M50 48 L34 60 M50 48 L66 60"/>
+          <path d="M50 70 L40 90 M50 70 L60 90"/>
+          <path d="M70 30 L70 75"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ============== 51 — herói de marketing ============== -->
+    <section class="slide">
+      <p>Em São Paulo, "bandeirante" tá em tudo: avenida, rodovia, prédio do governo, estátua gigante.</p>
+      <p style="margin-top: 12px;">Por muito tempo, foi vendido como <strong>herói nacional</strong> — o desbravador corajoso que "alargou as fronteiras".</p>
+      <p style="margin-top: 12px;">Mas essa imagem <strong>foi construída de propósito</strong>, entre <strong>1890 e 1940</strong>, por intelectuais paulistas que queriam dar a São Paulo uma identidade de "estado fundador da nação".</p>
+    </section>
+
+    <!-- ============== 52 ============== -->
+    <section class="slide">
+      <p class="big">O herói bandeirante é mais um personagem de <em>marketing político</em> do século XX do que retrato fiel do século XVII.</p>
+    </section>
+
+    <!-- ============== 53 — quem foram ============== -->
+    <section class="slide">
+      <p>Quem foram os bandeirantes de verdade? Homens do interior paulista que organizavam expedições (as "bandeiras") sertão adentro, com dois objetivos:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;"><strong>Capturar indígenas</strong> pra escravizar.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;"><strong>Procurar metais</strong> preciosos.</div>
+      </div>
+      <p style="margin-top: 12px;">Foram os caçadores de escravos índios mais eficientes da colônia — destruíram aldeias e missões jesuíticas inteiras. E foram os que acharam o ouro.</p>
+    </section>
+
+    <!-- ============== 54 — duas verdades ============== -->
+    <section class="slide">
+      <p>Então o que eles foram?</p>
+      <p class="big" style="margin-top: 14px;">Foram as <em>duas</em> coisas.</p>
+      <p style="margin-top: 14px;">Expandiram o território que hoje é o Brasil (sem eles, talvez metade do país fosse espanhola) <strong>e</strong> foram protagonistas de uma máquina de escravização indígena violentíssima.</p>
+      <p style="margin-top: 8px;">As duas verdades coexistem.</p>
+    </section>
+
+    <!-- ============== 55 — LIÇÃO 4 ============== -->
+    <section class="slide">
+      <span class="stamp">Lição 4</span>
+      <h2 style="margin-top: 16px;">Cuidado com herói nacional — quase sempre é personagem construído.</h2>
+      <p style="margin-top: 12px;">Toda nação fabrica seus heróis, escolhe o que lembrar e o que esconder. O bandeirante "desbravador glorioso" some convenientemente com a parte do "escravizador de índios".</p>
+    </section>
+
+    <!-- ============== 56 ============== -->
+    <section class="slide">
+      <p class="quote">Quando alguém te apresentar um herói da pátria perfeito, pergunte: quem construiu essa imagem, quando, e pra ganhar o quê?</p>
+      <p style="margin-top: 14px;">Vale pra bandeirante. Vale pra qualquer político vivo que tentem te vender como salvador hoje. A gente vai fundo nisso na aula 49.</p>
+    </section>
+
+    <!-- ============== 57 — que país sobrou ============== -->
+    <section class="slide">
+      <div class="eyebrow">O resultado</div>
+      <h2>Que país sobrou desse <em>projeto</em>?</h2>
+      <p style="margin-top: 14px;">Depois de 300 anos de colônia, quatro estruturas ficaram plantadas. E elas <strong>ecoam até 2026</strong>.</p>
+    </section>
+
+    <!-- ============== 58 — marca 1 ============== -->
+    <section class="slide">
+      <span class="stamp">Marca 1</span>
+      <h3 style="margin-top: 14px; font-style: normal; color: var(--ink); font-weight: 700;">Economia de exportação primária.</h3>
+      <p style="margin-top: 8px;">O Brasil sempre dependeu de exportar <strong>uma matéria-prima de cada vez</strong>: pau-brasil, açúcar, ouro, depois café. Nunca desenvolveu indústria na colônia — era <strong>proibido</strong>, Portugal vetava manufatura aqui pra obrigar a comprar produto português.</p>
+      <p style="margin-top: 12px;">Hoje a gente exporta soja, minério, petróleo, carne. <strong>Mudou o produto. A lógica continua a mesma.</strong></p>
+    </section>
+
+    <!-- ============== 59 — marca 2 ============== -->
+    <section class="slide">
+      <span class="stamp">Marca 2</span>
+      <h3 style="margin-top: 14px; font-style: normal; color: var(--ink); font-weight: 700;">Desigualdade extrema, desde a origem.</h3>
+      <p style="margin-top: 8px;">Poucos no topo (senhores de engenho, depois barões do café, depois as elites de hoje) e uma massa enorme embaixo.</p>
+      <p style="margin-top: 12px;">O Brasil <strong>nunca teve</strong> um momento de distribuição minimamente justa da terra ou da riqueza. A concentração veio no berço.</p>
+    </section>
+
+    <!-- ============== 60 — marca 3 ============== -->
+    <section class="slide">
+      <span class="stamp">Marca 3</span>
+      <h3 style="margin-top: 14px; font-style: normal; color: var(--ink); font-weight: 700;">Estado fraco e a serviço de poucos.</h3>
+      <p style="margin-top: 8px;">A Coroa nunca construiu instituições pra servir à população — construiu uma máquina pra <strong>arrecadar e controlar</strong>.</p>
+      <p style="margin-top: 12px;">O Estado brasileiro nasce como cobrador (o quinto, a derrama), não como prestador de serviço. Estado que pesa no bolso mas entrega pouco — você reconhece, né?</p>
+    </section>
+
+    <!-- ============== 61 — marca 4 ============== -->
+    <section class="slide">
+      <span class="stamp">Marca 4</span>
+      <h3 style="margin-top: 14px; font-style: normal; color: var(--ink); font-weight: 700;">Trabalho forçado como base de tudo.</h3>
+      <p style="margin-top: 8px;">A economia inteira foi erguida sobre <strong>escravidão</strong> — primeiro indígena, depois e principalmente africana.</p>
+      <p class="big" style="margin-top: 14px;">É tão central, tão fundador, que não cabe num pedaço de aula.</p>
+      <p style="margin-top: 8px;">Merece uma aula inteira só pra ele.</p>
+    </section>
+
+    <!-- ============== 62 — RESUMÃO ============== -->
+    <section class="slide">
+      <div class="eyebrow">Resumindo</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 20px;">·</span>
+          <span style="font-size: 14px;">Brasil = operação de extração, não projeto de nação. "Sentido da colonização" (Caio Prado Jr. e Celso Furtado).</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 20px;">·</span>
+          <span style="font-size: 14px;">30 anos só pau-brasil. Capitanias (1534) falharam. Governo-geral (1549) centralizou em Salvador.</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 20px;">·</span>
+          <span style="font-size: 14px;">Açúcar e plantation: o engenho é a matriz da desigualdade brasileira.</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 20px;">·</span>
+          <span style="font-size: 14px;">Ouro de Minas: quinto e derrama. Foi pra Portugal e dali pra Inglaterra. Extração pura.</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 20px;">·</span>
+          <span style="font-size: 14px;">Bandeirante: herói fabricado (1890-1940). Expandiu território E escravizou índios.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== 63 — A LIÇÃO MAIOR ============== -->
+    <section class="slide">
+      <div class="eyebrow">A lição maior</div>
+      <p class="quote">Não dá pra entender por que o Brasil é como é hoje sem entender pra que ele foi criado.</p>
+      <p style="margin-top: 14px;">Um país que nasceu como negócio de extração, montado pra enriquecer outro, sobre o trabalho de escravos, com poucos donos no topo — não vira democracia próspera e igualitária por mágica em 200 anos.</p>
+    </section>
+
+    <!-- ============== 64 ============== -->
+    <section class="slide">
+      <p>Isso <strong>não</strong> quer dizer que somos condenados pra sempre. Vários países superaram passados duros.</p>
+      <p style="margin-top: 14px;">Quer dizer que, pra mudar de verdade, é preciso primeiro <strong>enxergar com honestidade o que nos formou</strong>.</p>
+      <p class="big" style="margin-top: 14px; color: var(--accent);">É isso que você está fazendo agora.</p>
+    </section>
+
+    <!-- ============== 65 — gancho próxima aula ============== -->
+    <section class="slide">
+      <div class="eyebrow">Próxima aula · 25</div>
+      <h2>Escravidão: a <em>ferida</em> brasileira e o sistema global.</h2>
+      <p style="margin-top: 14px;">Hoje a escravidão apareceu o tempo todo, como pano de fundo. Na aula 25 ela vira o <strong>personagem central</strong> — porque foi o <strong>fundamento</strong> do Brasil, não uma "página feia" qualquer.</p>
+    </section>
+
+    <!-- ============== 66 ============== -->
+    <section class="slide">
+      <p>Você vai entender: por que africanos e não europeus; como funcionava o tráfico transatlântico (o maior deslocamento forçado da história); por que o Brasil foi o <strong>maior importador de escravos do mundo</strong> e o <strong>último país das Américas a abolir</strong> (1888).</p>
+      <p style="margin-top: 14px; color: var(--ink-soft);">Vai pesar. Mas é a aula mais importante pra entender o DNA do nosso país. Até lá.</p>
+    </section>
+
+    <!-- ============== 67 — INTRO QUIZ ============== -->
+    <section class="slide quiz-intro">
+      <div class="quiz-icon">?</div>
+      <div class="eyebrow" style="text-align: center;">Hora do quiz</div>
+      <h2>Bora ver o que ficou.</h2>
+      <p style="margin-top: 14px;">Seis perguntas rápidas.<br>Se errar, eu te explico na hora.</p>
+    </section>
+
+    <!-- ============== 68 — QUIZ 1 ============== -->
+    <section class="slide" data-quiz="1">
+      <div class="question-num">Pergunta 1 de 6</div>
+      <div class="question">O que os historiadores chamam de "sentido da colonização"?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Os indígenas não foram tratados como parceiros — o projeto nunca incluiu construir uma sociedade boa pra cá.">
+          <span class="letter">A</span><span>A aliança entre Portugal e os povos indígenas locais.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Justamente o contrário: a colônia não foi pensada pra crescer sozinha, e sim pra servir à metrópole.">
+          <span class="letter">B</span><span>O plano de fazer a colônia crescer de forma independente.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">C</span><span>A colônia existia pra dar lucro à metrópole, não pra si.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. A religião apareceu (jesuítas), mas o 'sentido' é econômico: extrair lucro pra Portugal.">
+          <span class="letter">D</span><span>A missão de levar a fé católica pro Novo Mundo.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Mandou bem.</span>Isso. Caio Prado Jr. e Celso Furtado mostraram que a colônia <strong>não existia pra si mesma</strong> — existia pra fornecer lucro pra metrópole (Portugal). Tudo foi organizado em torno de encher navio e mandar pra Lisboa.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a C.</strong> "Sentido da colonização" = a colônia montada pra dar lucro à metrópole, não pra prosperar sozinha.</div>
+    </section>
+
+    <!-- ============== 69 — QUIZ 2 ============== -->
+    <section class="slide" data-quiz="2">
+      <div class="question-num">Pergunta 2 de 6</div>
+      <div class="question">Por que Portugal finalmente decidiu povoar o Brasil de verdade?</div>
+      <div class="options">
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">A</span><span>Por medo de perder o território pros franceses.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. O ouro só foi achado quase 200 anos depois, no fim do século XVII. A ocupação começou bem antes.">
+          <span class="letter">B</span><span>Porque tinha acabado de descobrir o ouro de Minas.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Portugal demorou 30 anos justamente porque não viu valor na terra de início.">
+          <span class="letter">C</span><span>Porque amava aquela terra nova e fértil.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. A Igreja veio depois (1549, com os jesuítas), não foi o motivo inicial da ocupação.">
+          <span class="letter">D</span><span>Porque a Igreja exigiu catequizar os indígenas.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Isso aí.</span>Os franceses começaram a contrabandear pau-brasil, e em pleno mercantilismo Portugal pensou: "ou eu ocupo, ou perco." <strong>Geopolítica pura</strong> — não foi amor à terra.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a A.</strong> O Brasil começou a ser povoado por medo de perder pro concorrente francês.</div>
+    </section>
+
+    <!-- ============== 70 — QUIZ 3 ============== -->
+    <section class="slide" data-quiz="3">
+      <div class="question-num">Pergunta 3 de 6</div>
+      <div class="question">Por que as capitanias hereditárias (1534) quase todas fracassaram?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Os indígenas resistiram em vários pontos, mas o motivo central foi a falta de investimento de quem deveria bancar.">
+          <span class="letter">A</span><span>Porque os indígenas dominaram todas as faixas.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. O problema não era excesso de regra — era falta de dinheiro e gente disposta a vir.">
+          <span class="letter">B</span><span>Porque a Coroa impôs regras rígidas demais.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não foi por isso. As duas que deram certo (Pernambuco e São Vicente) tinham o mesmo clima das outras.">
+          <span class="letter">C</span><span>Porque o clima do litoral era frio demais.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">D</span><span>Portugal terceirizou sem investir; faltou dinheiro e gente.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Exato.</span>Portugal quis colonizar sem botar a mão no bolso — terceirizou pros donatários. Faltou dinheiro, a distância era brutal e ninguém queria largar a Europa. Só Pernambuco e São Vicente deram certo.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a D.</strong> Terceirizar o risco sem investir cobra o preço depois — quase tudo faliu.</div>
+    </section>
+
+    <!-- ============== 71 — QUIZ 4 ============== -->
+    <section class="slide" data-quiz="4">
+      <div class="question-num">Pergunta 4 de 6</div>
+      <div class="question">Quais são as quatro características fixas da plantation?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. A plantation era o oposto: poucos donos de terra enorme, não pequenos sítios diversificados.">
+          <span class="letter">A</span><span>Vários cultivos, pequenas terras, salário e consumo local.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">B</span><span>Monocultura, latifúndio, escravidão e exportação.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Indústria e tecnologia eram proibidas na colônia; a base era agrícola e escrava.">
+          <span class="letter">C</span><span>Indústria, tecnologia, trabalho livre e mercado interno.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Cooperativa e reforma agrária são conceitos modernos, o oposto da concentração da plantation.">
+          <span class="letter">D</span><span>Cooperativa, reforma agrária, ciência e justiça.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Show.</span>Monocultura (uma coisa só), latifúndio (terra concentrada), escravidão (trabalho forçado) e exportação (vender lá fora). Essas quatro se repetem na história do Brasil inteira.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a B.</strong> Monocultura + latifúndio + escravidão + exportação. O retrato do engenho.</div>
+    </section>
+
+    <!-- ============== 72 — QUIZ 5 ============== -->
+    <section class="slide" data-quiz="5">
+      <div class="question-num">Pergunta 5 de 6</div>
+      <div class="question">O que aconteceu com o ouro extraído de Minas Gerais?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Quase nada ficou aqui — o objetivo da colônia era exatamente extrair e mandar pra fora.">
+          <span class="letter">A</span><span>Ficou no Brasil e construiu indústria local.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Não foi distribuído à população — o Estado era cobrador (o quinto, a derrama), não prestador.">
+          <span class="letter">B</span><span>Foi dividido entre os mineradores e escravos.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Os indígenas não receberam o ouro; muitos foram escravizados pra trabalhar nas minas.">
+          <span class="letter">C</span><span>Foi entregue aos povos indígenas da região.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">D</span><span>Foi pra Portugal e dali escorreu pra Inglaterra.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Perfeito.</span>O quinto (20%) ia pra Coroa, o ouro saía quase todo pra Portugal e de lá escorria pra Inglaterra, pagando produtos e dívidas. Tem historiador que diz que <strong>ajudou a financiar a Revolução Industrial inglesa</strong>.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a D.</strong> A riqueza nasceu aqui e foi engordar outro lugar. Extração pura.</div>
+    </section>
+
+    <!-- ============== 73 — QUIZ 6 ============== -->
+    <section class="slide" data-quiz="6">
+      <div class="question-num">Pergunta 6 de 6</div>
+      <div class="question">Qual a visão mais honesta sobre os bandeirantes?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Essa imagem de herói puro foi fabricada de propósito entre 1890 e 1940 — esconde a escravização indígena.">
+          <span class="letter">A</span><span>Foram heróis que só desbravaram o território com glória.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Foram violentos com os índios, mas também expandiram o território e acharam o ouro. Reduzir a só vilão também é incompleto.">
+          <span class="letter">B</span><span>Foram apenas vilões sem nenhuma importância real.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">C</span><span>Expandiram o território E escravizaram índios em massa.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Eles eram do interior paulista e atuavam no sertão, ligados à escravização e à busca de metais — não eram marinheiros.">
+          <span class="letter">D</span><span>Eram navegadores que só exploravam o litoral.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Fechou com chave de ouro.</span>As duas verdades coexistem: expandiram o território (sem eles talvez metade do país fosse espanhola) <strong>e</strong> foram protagonistas de uma máquina de escravização indígena brutal. Cuidado com herói perfeito — pergunte quem construiu a imagem.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a C.</strong> Nem só herói, nem só vilão: as duas coisas ao mesmo tempo.</div>
+    </section>
+
+    <!-- ============== 74 — TELA FINAL ============== -->
+    <section class="slide end">
+      <div class="eyebrow" style="text-align: center;">Fim da aula 24</div>
+      <h2>Você fechou o alicerce do Módulo 4.</h2>
+      <div class="score" id="scoreDisplay">0/6</div>
+      <p id="endMsg">Agora você enxerga o DNA do Brasil.</p>
+      <button class="restart" id="restartBtn">Voltar ao início</button>
+    </section>
+
+  </div>
+
+  <div class="tap-zone left" id="tapLeft"></div>
+  <div class="tap-zone right" id="tapRight"></div>
+</div>
+
+<script>
+  const slidesEl = document.getElementById('slides');
+  const slides = Array.from(slidesEl.querySelectorAll('.slide'));
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  let current = 0;
+  let score = 0;
+  const answered = {};
+
+  // build progress segments
+  slides.forEach((_, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.index = i;
+    progress.appendChild(seg);
+  });
+  const segs = Array.from(progress.querySelectorAll('.seg'));
+
+  function render() {
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'prev');
+      if (i === current) s.classList.add('active');
+      else if (i < current) s.classList.add('prev');
+    });
+    segs.forEach((seg, i) => {
+      seg.classList.remove('done', 'current');
+      if (i < current) seg.classList.add('done');
+      else if (i === current) seg.classList.add('current');
+    });
+    counter.textContent = (current + 1) + ' / ' + total;
+    slides[current].scrollTop = 0;
+  }
+
+  function go(dir) {
+    const next = current + dir;
+    if (next < 0 || next >= total) return;
+    current = next;
+    render();
+  }
+  function goTo(i) {
+    if (i < 0 || i >= total) return;
+    current = i;
+    render();
+  }
+
+  document.getElementById('tapRight').addEventListener('click', () => go(1));
+  document.getElementById('tapLeft').addEventListener('click', () => go(-1));
+
+  // progress bar interactive
+  function segFromX(clientX) {
+    const rect = progress.getBoundingClientRect();
+    const ratio = (clientX - rect.left) / rect.width;
+    return Math.max(0, Math.min(total - 1, Math.floor(ratio * total)));
+  }
+  let dragging = false;
+  progress.addEventListener('click', (e) => goTo(segFromX(e.clientX)));
+  progress.addEventListener('touchstart', (e) => { dragging = true; goTo(segFromX(e.touches[0].clientX)); }, {passive:true});
+  progress.addEventListener('touchmove', (e) => { if (dragging) goTo(segFromX(e.touches[0].clientX)); }, {passive:true});
+  progress.addEventListener('touchend', () => { dragging = false; });
+
+  // swipe
+  let startX = 0, startY = 0, touching = false;
+  slidesEl.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY; touching = true;
+  }, {passive:true});
+  slidesEl.addEventListener('touchend', (e) => {
+    if (!touching) return;
+    touching = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      go(dx < 0 ? 1 : -1);
+    }
+  }, {passive:true});
+
+  // keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+
+  // quiz logic
+  slides.forEach(slide => {
+    if (!slide.dataset.quiz) return;
+    const qId = slide.dataset.quiz;
+    const options = slide.querySelectorAll('.option');
+    const fbRight = slide.querySelector('[data-fb="right"]');
+    const fbMiss = slide.querySelector('[data-fb="miss"]');
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        if (answered[qId]) return;
+        answered[qId] = true;
+        const isCorrect = opt.dataset.correct === 'true';
+        options.forEach(o => {
+          o.classList.add('disabled');
+          if (o.dataset.correct === 'true') o.classList.add('correct');
+        });
+        if (isCorrect) {
+          score++;
+          fbRight.classList.add('show');
+        } else {
+          opt.classList.add('wrong');
+          const slot = fbMiss.querySelector('[data-explain-text]');
+          if (slot) slot.textContent = opt.dataset.explain || '';
+          fbMiss.classList.add('show');
+        }
+        updateScore();
+      });
+    });
+  });
+
+  function updateScore() {
+    const disp = document.getElementById('scoreDisplay');
+    const msg = document.getElementById('endMsg');
+    disp.textContent = score + '/6';
+    if (score === 6) msg.textContent = 'Gabaritou. Você já enxerga o DNA do Brasil de verdade.';
+    else if (score >= 4) msg.textContent = 'Boa! Pegou o essencial: o Brasil nasceu pra extrair, não pra prosperar.';
+    else msg.textContent = 'Vale revisar. A ideia central: origem importa — e a do Brasil foi extração.';
+  }
+
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    score = 0;
+    for (const k in answered) delete answered[k];
+    slides.forEach(slide => {
+      if (!slide.dataset.quiz) return;
+      slide.querySelectorAll('.option').forEach(o => o.classList.remove('disabled','correct','wrong'));
+      slide.querySelectorAll('.feedback').forEach(f => f.classList.remove('show'));
+    });
+    updateScore();
+    goTo(0);
+  });
+
+  render();
+</script>
+
+</body>
+</html>
